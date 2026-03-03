@@ -3,6 +3,8 @@
 This repository contains a set of SQL scripts defining a relational database for managing
 **digital license keys**.
 
+---
+
 ## About the database
 
 The schema implements core functionality for selling, reserving, and distributing
@@ -18,6 +20,14 @@ software/gaming license keys. Key concepts include:
 Several supporting objects enforce business rules via
 `CHECK` constraints, unique indexes, and primary key constraints.
 
+---
+
+## Graphic model
+
+<img width="1920" height="1080" alt="Blue Green Professional Flowchart Template Brainstorm (6)" src="https://github.com/user-attachments/assets/cf350ff8-e427-4232-aef7-59d95affd258" />
+
+---
+
 ## What you can do
 
 - **Install** the database by running `1_create.txt`.
@@ -28,6 +38,8 @@ Several supporting objects enforce business rules via
 - **Browse** the structure to understand relationships: users → carts → orders → entitlements,
   etc.
 
+  ---
+
 ## Limitations & notes
 
 - The current schema assumes a single-currency store (`PLN`) and uses hardcoded locale
@@ -36,6 +48,8 @@ Several supporting objects enforce business rules via
 - Some enums are small and might require expansion (e.g. order statuses, group roles).
 - Triggers and stored procedures contain basic examples but are not exhaustive.
 - All temporal fields use `DATETIME` or `DATE` without timezone support.
+
+---
 
 ## Future enhancements
 
@@ -50,4 +64,5 @@ Several supporting objects enforce business rules via
 - **Testing harness**: include sample data scripts and unit tests for procedures.
 
 Feel free to adapt the schema for other digital goods, embed it in your own
+
 application, or use it as a learning resource for database design.
