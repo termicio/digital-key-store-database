@@ -1,0 +1,106 @@
+DROP DATABASE IF EXISTS DIGITAL_KEY_STORE;
+CREATE DATABASE DIGITAL_KEY_STORE
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_0900_ai_ci;
+
+USE DIGITAL_KEY_STORE;
+
+CREATE TABLE USER_ACCOUNT (
+  email               VARCHAR(255) NOT NULL,
+  password_hash       VARCHAR(255) NOT NULL,
+  display_name        VARCHAR(100) NOT NULL,
+  status              ENUM('ACTIVE','LOCKED','LOGICALLY_DELETED') NOT NULL,
+  created_at          DATE NOT NULL,
+  CONSTRAINT USER_ACCOUNT_PK PRIMARY KEY (email)
+);
+
+CREATE TABLE PRODUCT (
+  sku                 VARCHAR(64) NOT NULL,
+  name                VARCHAR(255) NOT NULL,
+  platform            VARCHAR(64) NOT NULL,
+  region              VARCHAR(32) NOT NULL,
+  edition             VARCHAR(64) NOT NULL,
+  license_type        VARCHAR(64) NOT NULL,
+  price_gross_pln     DECIMAL(10,2) NOT NULL,
+  active              BOOLEAN NOT NULL,
+  CONSTRAINT PRODUCT_PK PRIMARY KEY (sku),
+  CONSTRAINT PRODUCT_PRICE_CHK CHECK (price_gross_pln >= 0)
+);
+
+CREATE TABLE LICENSE_KEY (
+  code                VARCHAR(128) NOT NULL,
+  sku                 VARCHAR(64) NOT NULL,
+  status              ENUM('AVAILABLE','RESERVED','ISSUED') NOT NULL,
+  acquired_date       DATE NOT NULL,
+  CONSTRAINT LICENSE_KEY_PK PRIMARY KEY (code)
+);
+
+CREATE TABLE CART (
+  cart_id             BIGINT NOT NULL,
+  email               VARCHAR(255) NOT NULL,
+  status              ENUM('ACTIVE','CLOSED','ABANDONED') NOT NULL,
+  created             DATETIME NOT NULL,
+  last_updated_at     DATETIME NOT NULL,
+  CONSTRAINT CART_PK PRIMARY KEY (cart_id),
+  CONSTRAINT CART_EMAIL_UQ UNIQUE (email)
+);
+
+CREATE TABLE CART_ITEM (
+  cart_id             BIGINT NOT NULL,
+  sku                 VARCHAR(64) NOT NULL,
+  quantity            INT NOT NULL,
+  price_gross_pln_snapshot DECIMAL(10,2) NOT NULL,
+  added_at            DATETIME NOT NULL,
+  CONSTRAINT CART_ITEM_PK PRIMARY KEY (cart_id, sku),
+  CONSTRAINT CART_ITEM_QUANTITY_CHK CHECK (quantity > 0),
+  CONSTRAINT CART_ITEM_PRICE_CHK CHECK (price_gross_pln_snapshot >= 0)
+);
+
+CREATE TABLE ORDERS (
+  order_number        VARCHAR(32) NOT NULL,
+  email               VARCHAR(255) NOT NULL,
+  status              ENUM('NEW','PAID','CANCELLED','COMPLETED') NOT NULL,
+  value_gross_pln     DECIMAL(10,2) NOT NULL,
+  created             DATETIME NOT NULL,
+  paid_at             DATETIME NULL,
+  CONSTRAINT ORDERS_PK PRIMARY KEY (order_number),
+  CONSTRAINT ORDERS_VALUE_CHK CHECK (value_gross_pln >= 0)
+);
+
+CREATE TABLE ENTITLEMENT (
+  order_number        VARCHAR(32) NOT NULL,
+  code                VARCHAR(128) NOT NULL,
+  status              ENUM('ACTIVE','REVOKED','CANCELLED') NOT NULL,
+  created             DATETIME NOT NULL,
+  CONSTRAINT ENTITLEMENT_PK PRIMARY KEY (order_number, code),
+  CONSTRAINT ENTITLEMENT_CODE_UQ UNIQUE (code)
+);
+
+CREATE TABLE SHARING_GROUP (
+  group_id            BIGINT NOT NULL,
+  name                VARCHAR(100) NOT NULL,
+  created_at          DATETIME NOT NULL,
+  CONSTRAINT SHARING_GROUP_PK PRIMARY KEY (group_id)
+);
+
+CREATE TABLE GROUP_MEMBER (
+  group_id            BIGINT NOT NULL,
+  email               VARCHAR(255) NOT NULL,
+  role                ENUM('OWNER','MEMBER') NOT NULL,
+  joined_at           DATETIME NOT NULL,
+  CONSTRAINT GROUP_MEMBER_PK PRIMARY KEY (group_id, email)
+);
+
+CREATE TABLE GROUP_KEY_ACCESS (
+  group_id            BIGINT NOT NULL,
+  code                VARCHAR(128) NOT NULL,
+  status              ENUM('ACTIVE','REVOKED') NOT NULL,
+  granted_at          DATETIME NOT NULL,
+  revoked_at          DATETIME NULL,
+  CONSTRAINT GROUP_KEY_ACCESS_PK PRIMARY KEY (group_id, code)
+);
+
+CREATE INDEX IX_LICENSE_KEY_SKU_STATUS ON LICENSE_KEY (sku, status);
+CREATE INDEX IX_CART_ITEM_SKU ON CART_ITEM (sku);
+CREATE INDEX IX_ORDERS_EMAIL ON ORDERS (email);
+CREATE INDEX IX_GROUP_MEMBER_EMAIL ON GROUP_MEMBER (email);

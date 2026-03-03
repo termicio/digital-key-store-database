@@ -1,0 +1,143 @@
+USE DIGITAL_KEY_STORE;
+
+INSERT INTO USER_ACCOUNT (email, password_hash, display_name, status, created_at) VALUES
+('jan@test.pl', 'hash1', 'Janek', 'ACTIVE', '2025-04-09'),
+('ala@test.pl', 'hash2', 'Ala', 'ACTIVE', '2025-05-29'),
+('ola@test.pl', 'hash3', 'Ola', 'ACTIVE', '2025-07-18'),
+('piotr@test.pl', 'hash4', 'Piotr', 'ACTIVE', '2025-08-07'),
+('ania@test.pl', 'hash5', 'Ania', 'ACTIVE', '2025-08-27'),
+('bartek@test.pl', 'hash6', 'Bartek', 'LOCKED', '2025-09-06'),
+('kasia@test.pl', 'hash7', 'Kasia', 'ACTIVE', '2025-09-16'),
+('tomek@test.pl', 'hash8', 'Tomek', 'ACTIVE', '2025-09-26'),
+('ewa@test.pl', 'hash9', 'Ewa', 'ACTIVE', '2025-10-06'),
+('adam@test.pl', 'hash10', 'Adam', 'ACTIVE', '2025-10-16');
+
+INSERT INTO PRODUCT (sku, name, platform, region, edition, license_type, price_gross_pln, active) VALUES
+('WIN11-PRO-PL', 'Windows 11 Pro', 'Windows', 'PL', 'Pro', 'Retail', 599.0, 1),
+('OFFICE21-HB-PL', 'Office 2021 Home&Business', 'Windows', 'PL', 'H&B', 'Retail', 449.0, 1),
+('STEAM-GTA5-EU', 'GTA V', 'Steam', 'EU', 'Standard', 'Key', 69.99, 1),
+('STEAM-CS2-GLOBAL', 'Counter-Strike 2', 'Steam', 'GLOBAL', 'Standard', 'Key', 0.0, 1),
+('XBOX-GP-1M-PL', 'Game Pass 1M', 'Xbox', 'PL', 'Standard', 'Subscription', 49.99, 1),
+('PSN-PLUS-3M-PL', 'PS Plus 3M', 'PlayStation', 'PL', 'Standard', 'Subscription', 119.99, 1),
+('ADOBE-CC-1M', 'Adobe CC 1M', 'Windows', 'GLOBAL', 'Standard', 'Subscription', 239.0, 1),
+('NORDVPN-2Y', 'NordVPN 2Y', 'Multi', 'GLOBAL', 'Standard', 'Subscription', 299.0, 1),
+('ESET-IS-1Y', 'ESET Internet Security 1Y', 'Windows', 'EU', 'Standard', 'Retail', 129.0, 1),
+('WIN10-HOME-PL', 'Windows 10 Home', 'Windows', 'PL', 'Home', 'OEM', 199.0, 0);
+
+INSERT INTO LICENSE_KEY (code, sku, status, acquired_date) VALUES
+('KEY-0001-AAAAA-BBBBB-CCCCC', 'WIN11-PRO-PL', 'AVAILABLE', '2025-10-25'),
+('KEY-0002-AAAAA-BBBBB-CCCCC', 'OFFICE21-HB-PL', 'AVAILABLE', '2025-10-24'),
+('KEY-0003-AAAAA-BBBBB-CCCCC', 'STEAM-GTA5-EU', 'AVAILABLE', '2025-10-23'),
+('KEY-0004-AAAAA-BBBBB-CCCCC', 'STEAM-CS2-GLOBAL', 'AVAILABLE', '2025-10-22'),
+('KEY-0005-AAAAA-BBBBB-CCCCC', 'XBOX-GP-1M-PL', 'AVAILABLE', '2025-10-21'),
+('KEY-0006-AAAAA-BBBBB-CCCCC', 'PSN-PLUS-3M-PL', 'AVAILABLE', '2025-10-20'),
+('KEY-0007-AAAAA-BBBBB-CCCCC', 'ADOBE-CC-1M', 'AVAILABLE', '2025-10-19'),
+('KEY-0008-AAAAA-BBBBB-CCCCC', 'NORDVPN-2Y', 'AVAILABLE', '2025-10-18'),
+('KEY-0009-AAAAA-BBBBB-CCCCC', 'ESET-IS-1Y', 'AVAILABLE', '2025-10-17'),
+('KEY-0010-AAAAA-BBBBB-CCCCC', 'WIN10-HOME-PL', 'AVAILABLE', '2025-10-16'),
+('KEY-0011-AAAAA-BBBBB-CCCCC', 'WIN11-PRO-PL', 'AVAILABLE', '2025-10-15'),
+('KEY-0012-AAAAA-BBBBB-CCCCC', 'OFFICE21-HB-PL', 'AVAILABLE', '2025-10-14'),
+('KEY-0013-AAAAA-BBBBB-CCCCC', 'STEAM-GTA5-EU', 'AVAILABLE', '2025-10-13'),
+('KEY-0014-AAAAA-BBBBB-CCCCC', 'STEAM-CS2-GLOBAL', 'AVAILABLE', '2025-10-12'),
+('KEY-0015-AAAAA-BBBBB-CCCCC', 'XBOX-GP-1M-PL', 'AVAILABLE', '2025-10-11'),
+('KEY-0016-AAAAA-BBBBB-CCCCC', 'PSN-PLUS-3M-PL', 'AVAILABLE', '2025-10-10'),
+('KEY-0017-AAAAA-BBBBB-CCCCC', 'ADOBE-CC-1M', 'AVAILABLE', '2025-10-09'),
+('KEY-0018-AAAAA-BBBBB-CCCCC', 'NORDVPN-2Y', 'AVAILABLE', '2025-10-08'),
+('KEY-0019-AAAAA-BBBBB-CCCCC', 'ESET-IS-1Y', 'AVAILABLE', '2025-10-07'),
+('KEY-0020-AAAAA-BBBBB-CCCCC', 'WIN10-HOME-PL', 'AVAILABLE', '2025-10-06');
+
+INSERT INTO CART (cart_id, email, status, created, last_updated_at) VALUES
+(1, 'jan@test.pl', 'ACTIVE', '2026-01-23 00:00:00', '2026-01-28 00:00:00'),
+(2, 'ala@test.pl', 'ACTIVE', '2026-01-22 00:00:00', '2026-01-27 00:00:00'),
+(3, 'ola@test.pl', 'ACTIVE', '2026-01-21 00:00:00', '2026-01-26 00:00:00'),
+(4, 'piotr@test.pl', 'ACTIVE', '2026-01-20 00:00:00', '2026-01-25 00:00:00'),
+(5, 'ania@test.pl', 'ACTIVE', '2026-01-19 00:00:00', '2026-01-24 00:00:00'),
+(6, 'bartek@test.pl', 'ACTIVE', '2026-01-18 00:00:00', '2026-01-23 00:00:00'),
+(7, 'kasia@test.pl', 'ACTIVE', '2026-01-17 00:00:00', '2026-01-22 00:00:00'),
+(8, 'tomek@test.pl', 'CLOSED', '2026-01-16 00:00:00', '2026-01-21 00:00:00'),
+(9, 'ewa@test.pl', 'CLOSED', '2026-01-15 00:00:00', '2026-01-20 00:00:00'),
+(10, 'adam@test.pl', 'CLOSED', '2026-01-14 00:00:00', '2026-01-19 00:00:00');
+
+INSERT INTO CART_ITEM (cart_id, sku, quantity, price_gross_pln_snapshot, added_at) VALUES
+(1, 'WIN11-PRO-PL', 1, 599.0, '2026-01-25 00:00:00'),
+(2, 'OFFICE21-HB-PL', 1, 449.0, '2026-01-26 00:00:00'),
+(3, 'STEAM-GTA5-EU', 1, 69.99, '2026-01-27 00:00:00'),
+(4, 'XBOX-GP-1M-PL', 2, 49.99, '2026-01-28 00:00:00'),
+(5, 'PSN-PLUS-3M-PL', 1, 119.99, '2026-01-28 00:00:00'),
+(6, 'ADOBE-CC-1M', 1, 239.0, '2026-01-29 00:00:00'),
+(7, 'NORDVPN-2Y', 1, 299.0, '2026-01-29 00:00:00'),
+(8, 'ESET-IS-1Y', 1, 129.0, '2026-01-30 00:00:00'),
+(9, 'WIN11-PRO-PL', 1, 599.0, '2026-01-31 00:00:00'),
+(10, 'STEAM-GTA5-EU', 1, 69.99, '2026-02-01 00:00:00');
+
+INSERT INTO ORDERS (order_number, email, status, value_gross_pln, created, paid_at) VALUES
+('ZAM/2026/001', 'jan@test.pl', 'PAID', 599.0, '2026-01-14 00:00:00', '2026-01-15 00:00:00'),
+('ZAM/2026/002', 'ala@test.pl', 'PAID', 449.0, '2026-01-16 00:00:00', '2026-01-16 00:00:00'),
+('ZAM/2026/003', 'ola@test.pl', 'COMPLETED', 69.99, '2026-01-17 00:00:00', '2026-01-17 00:00:00'),
+('ZAM/2026/004', 'piotr@test.pl', 'PAID', 99.98, '2026-01-19 00:00:00', '2026-01-19 00:00:00'),
+('ZAM/2026/005', 'ania@test.pl', 'NEW', 119.99, '2026-01-20 00:00:00', NULL),
+('ZAM/2026/006', 'kasia@test.pl', 'CANCELLED', 239.0, '2026-01-21 00:00:00', NULL),
+('ZAM/2026/007', 'tomek@test.pl', 'PAID', 299.0, '2026-01-22 00:00:00', '2026-01-22 00:00:00'),
+('ZAM/2026/008', 'ewa@test.pl', 'PAID', 129.0, '2026-01-23 00:00:00', '2026-01-23 00:00:00'),
+('ZAM/2026/009', 'adam@test.pl', 'PAID', 69.99, '2026-01-24 00:00:00', '2026-01-24 00:00:00'),
+('ZAM/2026/010', 'jan@test.pl', 'PAID', 49.99, '2026-01-25 00:00:00', '2026-01-25 00:00:00');
+
+INSERT INTO ENTITLEMENT (order_number, code, status, created) VALUES
+('ZAM/2026/001', 'KEY-0001-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-25 00:00:00'),
+('ZAM/2026/002', 'KEY-0002-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-24 00:00:00'),
+('ZAM/2026/003', 'KEY-0003-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-23 00:00:00'),
+('ZAM/2026/004', 'KEY-0004-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-22 00:00:00'),
+('ZAM/2026/005', 'KEY-0005-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-21 00:00:00'),
+('ZAM/2026/006', 'KEY-0006-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-20 00:00:00'),
+('ZAM/2026/007', 'KEY-0007-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-19 00:00:00'),
+('ZAM/2026/008', 'KEY-0008-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-18 00:00:00'),
+('ZAM/2026/009', 'KEY-0009-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-17 00:00:00'),
+('ZAM/2026/010', 'KEY-0010-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-16 00:00:00');
+
+UPDATE LICENSE_KEY SET status='ISSUED' WHERE code IN ('KEY-0001-AAAAA-BBBBB-CCCCC', 'KEY-0002-AAAAA-BBBBB-CCCCC', 'KEY-0003-AAAAA-BBBBB-CCCCC', 'KEY-0004-AAAAA-BBBBB-CCCCC', 'KEY-0005-AAAAA-BBBBB-CCCCC', 'KEY-0006-AAAAA-BBBBB-CCCCC', 'KEY-0007-AAAAA-BBBBB-CCCCC', 'KEY-0008-AAAAA-BBBBB-CCCCC', 'KEY-0009-AAAAA-BBBBB-CCCCC', 'KEY-0010-AAAAA-BBBBB-CCCCC');
+
+INSERT INTO SHARING_GROUP (group_id, name, created_at) VALUES
+(101, 'Group_1', '2025-12-04 00:00:00'),
+(102, 'Group_2', '2025-12-03 00:00:00'),
+(103, 'Group_3', '2025-12-02 00:00:00'),
+(104, 'Group_4', '2025-12-01 00:00:00'),
+(105, 'Group_5', '2025-11-30 00:00:00'),
+(106, 'Group_6', '2025-11-29 00:00:00'),
+(107, 'Group_7', '2025-11-28 00:00:00'),
+(108, 'Group_8', '2025-11-27 00:00:00'),
+(109, 'Group_9', '2025-11-26 00:00:00'),
+(110, 'Group_10', '2025-11-25 00:00:00');
+
+INSERT INTO GROUP_MEMBER (group_id, email, role, joined_at) VALUES
+(101, 'jan@test.pl', 'OWNER', '2025-12-05 00:00:00'),
+(101, 'ala@test.pl', 'MEMBER', '2025-12-06 00:00:00'),
+(102, 'ala@test.pl', 'OWNER', '2025-12-04 00:00:00'),
+(102, 'ola@test.pl', 'MEMBER', '2025-12-05 00:00:00'),
+(103, 'ola@test.pl', 'OWNER', '2025-12-03 00:00:00'),
+(103, 'piotr@test.pl', 'MEMBER', '2025-12-04 00:00:00'),
+(104, 'piotr@test.pl', 'OWNER', '2025-12-02 00:00:00'),
+(104, 'ania@test.pl', 'MEMBER', '2025-12-03 00:00:00'),
+(105, 'ania@test.pl', 'OWNER', '2025-12-01 00:00:00'),
+(105, 'bartek@test.pl', 'MEMBER', '2025-12-02 00:00:00'),
+(106, 'bartek@test.pl', 'OWNER', '2025-11-30 00:00:00'),
+(106, 'kasia@test.pl', 'MEMBER', '2025-12-01 00:00:00'),
+(107, 'kasia@test.pl', 'OWNER', '2025-11-29 00:00:00'),
+(107, 'tomek@test.pl', 'MEMBER', '2025-11-30 00:00:00'),
+(108, 'tomek@test.pl', 'OWNER', '2025-11-28 00:00:00'),
+(108, 'ewa@test.pl', 'MEMBER', '2025-11-29 00:00:00'),
+(109, 'ewa@test.pl', 'OWNER', '2025-11-27 00:00:00'),
+(109, 'adam@test.pl', 'MEMBER', '2025-11-28 00:00:00'),
+(110, 'adam@test.pl', 'OWNER', '2025-11-26 00:00:00'),
+(110, 'jan@test.pl', 'MEMBER', '2025-11-27 00:00:00');
+
+INSERT INTO GROUP_KEY_ACCESS (group_id, code, status, granted_at, revoked_at) VALUES
+(101, 'KEY-0001-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-26 00:00:00', NULL),
+(102, 'KEY-0002-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-25 00:00:00', NULL),
+(103, 'KEY-0003-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-24 00:00:00', NULL),
+(104, 'KEY-0004-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-23 00:00:00', NULL),
+(105, 'KEY-0005-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-22 00:00:00', NULL),
+(106, 'KEY-0006-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-21 00:00:00', NULL),
+(107, 'KEY-0007-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-20 00:00:00', NULL),
+(108, 'KEY-0008-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-19 00:00:00', NULL),
+(109, 'KEY-0009-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-18 00:00:00', NULL),
+(110, 'KEY-0010-AAAAA-BBBBB-CCCCC', 'ACTIVE', '2026-01-17 00:00:00', NULL);

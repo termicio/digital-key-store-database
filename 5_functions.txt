@@ -1,0 +1,58 @@
+USE DIGITAL_KEY_STORE;
+
+DELIMITER $$
+
+CREATE FUNCTION FN_AVAILABLE_KEYS(p_sku VARCHAR(64))
+RETURNS INT
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+  DECLARE v_cnt INT;
+  SELECT COUNT(*) INTO v_cnt
+  FROM LICENSE_KEY
+  WHERE sku = p_sku AND status = 'AVAILABLE';
+  RETURN v_cnt;
+END$$
+
+CREATE FUNCTION FN_SUM_USER_ORDERS(p_email VARCHAR(255), p_status VARCHAR(20))
+RETURNS DECIMAL(10,2)
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+  DECLARE v_sum DECIMAL(10,2);
+  SELECT COALESCE(SUM(wartosc_brutto_pln), 0) INTO v_sum
+  FROM ORDERS
+  WHERE email = p_email AND status = p_status;
+  RETURN v_sum;
+END$$
+
+CREATE FUNCTION FN_IS_OWNER(p_email VARCHAR(255), p_group_id BIGINT)
+RETURNS TINYINT
+DETERMINISTIC
+READS SQL DATA
+BEGIN
+  DECLARE v_exists INT;
+  SELECT COUNT(*) INTO v_exists
+  FROM GROUP_MEMBER
+  WHERE group_id = p_group_id AND email = p_email AND role = 'OWNER';
+  RETURN IF(v_exists > 0, 1, 0);
+END$$
+
+DELIMITER ;
+
+-- =============================================================
+-- EXAMPLES OF FUNCTION CALLS (comments – for manual testing)
+-- =============================================================
+-- 1) How many available keys (status = 'AVAILABLE') are there for a given SKU?
+--    (After loading data from 2_inserts.txt for WIN11-PRO-PL it should return 1,
+--     because KEY-0001 is ISSUED and KEY-0011 remains AVAILABLE.)
+-- SELECT FN_AVAILABLE_KEYS('WIN11-PRO-PL') AS available_keys;
+
+-- 2) Sum of a user’s order values with a specific status.
+--    (For jan@test.pl and status 'PAID' in sample data: 599.00 + 49.99 = 648.99)
+-- SELECT FN_SUM_USER_ORDERS('jan@test.pl', 'PAID') AS sum_paid;
+
+-- 3) Check if a user is OWNER of a given group.
+--    (In the data: jan@test.pl is OWNER of group 101, ala@test.pl is MEMBER of group 101.)
+-- SELECT FN_IS_OWNER('jan@test.pl', 101) AS is_owner_jan_101;  -- expected: 1
+-- SELECT FN_IS_OWNER('ala@test.pl', 101) AS is_owner_ala_101;  -- expected: 0

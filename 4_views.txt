@@ -1,0 +1,63 @@
+USE DIGITAL_KEY_STORE;
+
+CREATE OR REPLACE VIEW V_PRODUCT_AVAILABILITY AS
+SELECT
+  p.sku,
+  p.name,
+  p.platform,
+  p.region,
+  p.edition,
+  p.license_type,
+  p.price_gross_pln,
+  p.active,
+  SUM(CASE WHEN k.status = 'AVAILABLE' THEN 1 ELSE 0 END) AS available_keys
+FROM PRODUCT p
+LEFT JOIN LICENSE_KEY k ON k.sku = p.sku
+GROUP BY p.sku, p.name, p.platform, p.region, p.edition, p.license_type, p.price_gross_pln, p.active;
+
+CREATE OR REPLACE VIEW V_CART_CONTENT AS
+SELECT
+  c.cart_id,
+  c.email,
+  c.status AS cart_status,
+  cp.sku,
+  p.name AS product_name,
+  cp.quantity,
+  cp.price_gross_pln_snapshot,
+  (cp.quantity * cp.price_gross_pln_snapshot) AS item_value,
+  cp.added_at
+FROM CART c
+JOIN CART_ITEM cp ON cp.cart_id = c.cart_id
+JOIN PRODUCT p ON p.sku = cp.sku;
+
+CREATE OR REPLACE VIEW V_ORDER_KEYS AS
+SELECT
+  z.order_number,
+  z.email,
+  z.status AS order_status,
+  z.value_gross_pln,
+  z.created,
+  z.paid_at,
+  u.code,
+  u.status AS entitlement_status,
+  k.sku,
+  p.name AS product_name
+FROM ORDERS z
+JOIN ENTITLEMENT u ON u.order_number = z.order_number
+JOIN LICENSE_KEY k ON k.code = u.code
+JOIN PRODUCT p ON p.sku = k.sku;
+
+CREATE OR REPLACE VIEW V_ACTIVE_SHARING_GROUPS AS
+SELECT
+  g.group_id,
+  g.name AS group_name,
+  d.code,
+  k.sku,
+  p.name AS product_name,
+  d.status,
+  d.granted_at
+FROM SHARING_GROUP g
+JOIN GROUP_KEY_ACCESS d ON d.group_id = g.group_id
+JOIN LICENSE_KEY k ON k.code = d.code
+JOIN PRODUCT p ON p.sku = k.sku
+WHERE d.status = 'ACTIVE';

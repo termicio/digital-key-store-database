@@ -1,0 +1,221 @@
+USE DIGITAL_KEY_STORE;
+
+DELIMITER $$
+
+CREATE PROCEDURE PR_ADD_USER(
+  IN p_email VARCHAR(255),
+  IN p_password_hash VARCHAR(255),
+  IN p_name VARCHAR(100)
+)
+BEGIN
+  INSERT INTO USER_ACCOUNT(email, password_hash, display_name, status, created_at)
+  VALUES(p_email, p_password_hash, p_name, 'ACTIVE', CURRENT_DATE());
+END$$
+
+CREATE PROCEDURE PR_CREATE_CART(
+  IN p_id BIGINT,
+  IN p_email VARCHAR(255)
+)
+BEGIN
+  INSERT INTO CART(cart_id, email, status, created, last_updated_at)
+  VALUES(p_id, p_email, 'ACTIVE', NOW(), NOW());
+END$$
+
+CREATE PROCEDURE PR_ADD_TO_CART(
+  IN p_cart_id BIGINT,
+  IN p_sku VARCHAR(64),
+  IN p_quantity INT
+)
+BEGIN
+  INSERT INTO CART_ITEM(cart_id, sku, quantity, price_gross_pln_snapshot, added_at)
+  SELECT p_cart_id, p_sku, p_quantity, p.price_gross_pln, NOW()
+  FROM PRODUCT p
+  WHERE p.sku = p_sku
+  ON DUPLICATE KEY UPDATE
+    quantity = quantity + VALUES(quantity);
+
+  UPDATE CART SET last_updated_at = NOW() WHERE cart_id = p_cart_id;
+END$$
+
+CREATE PROCEDURE PR_CREATE_ORDER(
+  IN p_number VARCHAR(32),
+  IN p_email VARCHAR(255),
+  IN p_value DECIMAL(10,2)
+)
+BEGIN
+  INSERT INTO ORDERS(order_number, email, status, value_gross_pln, created, paid_at)
+  VALUES(p_number, p_email, 'NEW', p_value, NOW(), NULL);
+END$$
+
+CREATE PROCEDURE PR_PAY_ORDER(IN p_number VARCHAR(32))
+BEGIN
+  UPDATE ORDERS
+  SET status = 'PAID', paid_at = NOW()
+  WHERE order_number = p_number;
+END$$
+
+CREATE PROCEDURE PR_ASSIGN_KEY_TO_ORDER(
+  IN p_number VARCHAR(32),
+  IN p_code VARCHAR(128)
+)
+BEGIN
+  DECLARE v_status VARCHAR(20);
+
+  START TRANSACTION;
+
+    SELECT status INTO v_status
+    FROM LICENSE_KEY
+    WHERE code = p_code
+    FOR UPDATE;
+
+    IF v_status IS NULL THEN
+      ROLLBACK;
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Key does not exist.';
+    END IF;
+
+    IF v_status <> 'AVAILABLE' THEN
+      ROLLBACK;
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Key is not available.';
+    END IF;
+
+    INSERT INTO ENTITLEMENT(order_number, code, status, created)
+    VALUES(p_number, p_code, 'ACTIVE', NOW());
+
+    UPDATE LICENSE_KEY
+    SET status = 'ISSUED'
+    WHERE code = p_code;
+
+  COMMIT;
+END$$
+
+CREATE PROCEDURE PR_CREATE_GROUP(
+  IN p_group_id BIGINT,
+  IN p_name VARCHAR(100),
+  IN p_owner_email VARCHAR(255)
+)
+BEGIN
+  START TRANSACTION;
+    INSERT INTO SHARING_GROUP(group_id, name, created_at)
+    VALUES(p_group_id, p_name, NOW());
+
+    INSERT INTO GROUP_MEMBER(group_id, email, role, joined_at)
+    VALUES(p_group_id, p_owner_email, 'OWNER', NOW());
+  COMMIT;
+END$$
+
+CREATE PROCEDURE PR_ADD_GROUP_MEMBER(
+  IN p_owner_email VARCHAR(255),
+  IN p_group_id BIGINT,
+  IN p_email VARCHAR(255)
+)
+BEGIN
+  IF (SELECT COUNT(*) FROM GROUP_MEMBER WHERE group_id = p_group_id AND email = p_owner_email AND role='OWNER') = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Only OWNER can add members.';
+  END IF;
+
+  INSERT INTO GROUP_MEMBER(group_id, email, role, joined_at)
+  VALUES(p_group_id, p_email, 'MEMBER', NOW());
+END$$
+
+CREATE PROCEDURE PR_SHARE_KEY_WITH_GROUP(
+  IN p_owner_email VARCHAR(255),
+  IN p_group_id BIGINT,
+  IN p_code VARCHAR(128)
+)
+BEGIN
+  DECLARE v_is_owner INT;
+  DECLARE v_is_owner_of_key INT;
+
+  SELECT COUNT(*) INTO v_is_owner
+  FROM GROUP_MEMBER
+  WHERE group_id = p_group_id AND email = p_owner_email AND role = 'OWNER';
+
+  IF v_is_owner = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'User is not OWNER of this group.';
+  END IF;
+
+  SELECT COUNT(*) INTO v_is_owner_of_key
+  FROM ENTITLEMENT u
+  JOIN ORDERS z ON z.order_number = u.order_number
+  WHERE u.code = p_code AND z.email = p_owner_email AND u.status = 'ACTIVE';
+
+  IF v_is_owner_of_key = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'User is not the owner (purchaser) of this key.';
+  END IF;
+
+  INSERT INTO GROUP_KEY_ACCESS(group_id, code, status, granted_at, revoked_at)
+  VALUES(p_group_id, p_code, 'ACTIVE', NOW(), NULL)
+  ON DUPLICATE KEY UPDATE
+    status = 'ACTIVE',
+    granted_at = NOW(),
+    revoked_at = NULL;
+END$$
+
+CREATE PROCEDURE PR_REVOKE_SHARE(
+  IN p_owner_email VARCHAR(255),
+  IN p_group_id BIGINT,
+  IN p_code VARCHAR(128)
+)
+BEGIN
+  IF (SELECT COUNT(*) FROM GROUP_MEMBER WHERE group_id = p_group_id AND email = p_owner_email AND role='OWNER') = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'User is not OWNER of this group.';
+  END IF;
+
+  UPDATE GROUP_KEY_ACCESS
+  SET status = 'REVOKED', revoked_at = NOW()
+  WHERE group_id = p_group_id AND code = p_code;
+END$$
+
+CREATE PROCEDURE PR_DELETE_GROUP(IN p_group_id BIGINT)
+BEGIN
+  START TRANSACTION;
+    SET @ALLOW_GROUP_DELETE = 1;
+    DELETE FROM GROUP_KEY_ACCESS WHERE group_id = p_group_id;
+    DELETE FROM GROUP_MEMBER WHERE group_id = p_group_id;
+    DELETE FROM SHARING_GROUP WHERE group_id = p_group_id;
+    SET @ALLOW_GROUP_DELETE = NULL;
+  COMMIT;
+END$$
+
+DELIMITER ;
+
+-- =============================================================
+-- EXAMPLES OF PROCEDURE CALLS (comments – for manual testing)
+-- =============================================================
+-- NOTE: the calls below are examples. Running them multiple times may produce
+-- conflicts (e.g. duplicate primary keys), so they remain commented.
+
+-- 1) Add user
+-- CALL PR_ADD_USER('new@test.pl', 'hash_new', 'New User');
+
+-- 2) Create cart for user (cart_id must be unique and email in CART is UNIQUE)
+-- CALL PR_CREATE_CART(999, 'new@test.pl');
+
+-- 3) Add product to cart (will increment quantity if item exists)
+-- CALL PR_ADD_TO_CART(1, 'WIN11-PRO-PL', 1);
+-- CALL PR_ADD_TO_CART(1, 'WIN11-PRO-PL', 2);  -- quantity should increase by 2
+
+-- 4) Create order
+-- CALL PR_CREATE_ORDER('ZAM/2026/999', 'jan@test.pl', 599.00);
+
+-- 5) Mark order as paid
+-- CALL PR_PAY_ORDER('ZAM/2026/999');
+
+-- 6) Assign a specific key to an order (transaction + FOR UPDATE lock)
+--    (Key must exist and have status 'AVAILABLE'; after assignment it becomes 'ISSUED')
+-- CALL PR_ASSIGN_KEY_TO_ORDER('ZAM/2026/999', 'KEY-0011-AAAAA-BBBBB-CCCCC');
+
+-- 7) Create a group along with its OWNER (in one transaction)
+-- CALL PR_CREATE_GROUP(9999, 'Test_group', 'jan@test.pl');
+
+-- 8) Add a member to a group (only OWNER can add)
+-- CALL PR_ADD_GROUP_MEMBER('jan@test.pl', 101, 'ewa@test.pl');
+
+-- 9) Share a key with a group (group OWNER must also be the purchaser of the key)
+-- CALL PR_SHARE_KEY_WITH_GROUP('jan@test.pl', 101, 'KEY-0001-AAAAA-BBBBB-CCCCC');
+
+-- 10) Revoke a shared key in a group
+-- CALL PR_REVOKE_SHARE('jan@test.pl', 101, 'KEY-0001-AAAAA-BBBBB-CCCCC');
+
+-- 11) Delete a group (procedure sets a session variable to bypass the "group cannot be empty" trigger)
+-- CALL PR_DELETE_GROUP(101);

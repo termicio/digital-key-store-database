@@ -1,0 +1,95 @@
+USE DIGITAL_KEY_STORE;
+
+DELIMITER $$
+
+CREATE TRIGGER TR_GROUP_MEMBER_ONE_OWNER_INS
+BEFORE INSERT ON GROUP_MEMBER
+FOR EACH ROW
+BEGIN
+  IF NEW.role = 'OWNER' THEN
+    IF (SELECT COUNT(*) FROM GROUP_MEMBER WHERE group_id = NEW.group_id AND role = 'OWNER') > 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A group can have only one OWNER.';
+    END IF;
+  END IF;
+END$$
+
+CREATE TRIGGER TR_GROUP_MEMBER_ONE_OWNER_UPD
+BEFORE UPDATE ON GROUP_MEMBER
+FOR EACH ROW
+BEGIN
+  IF NEW.role = 'OWNER' AND OLD.role <> 'OWNER' THEN
+    IF (SELECT COUNT(*) FROM GROUP_MEMBER WHERE group_id = NEW.group_id AND role = 'OWNER') > 0 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'A group can have only one OWNER.';
+    END IF;
+  END IF;
+END$$
+
+CREATE TRIGGER TR_GROUP_MEMBER_NO_EMPTY_GROUP_DEL
+BEFORE DELETE ON GROUP_MEMBER
+FOR EACH ROW
+BEGIN
+  IF COALESCE(@ALLOW_GROUP_DELETE, 0) = 0 THEN
+    IF (SELECT COUNT(*) FROM GROUP_MEMBER WHERE group_id = OLD.group_id) = 1 THEN
+      SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot delete the last member of a group (group cannot be empty).';
+    END IF;
+  END IF;
+END$$
+
+CREATE TRIGGER TR_CART_ITEM_CART_ACTIVE
+BEFORE INSERT ON CART_ITEM
+FOR EACH ROW
+BEGIN
+  DECLARE v_status VARCHAR(20);
+  SELECT status INTO v_status FROM CART WHERE cart_id = NEW.cart_id;
+  IF v_status <> 'ACTIVE' THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot add items to an inactive cart.';
+  END IF;
+END$$
+
+CREATE TRIGGER TR_ACCESS_REQUIRES_PURCHASE
+BEFORE INSERT ON GROUP_KEY_ACCESS
+FOR EACH ROW
+BEGIN
+  IF (SELECT COUNT(*) FROM ENTITLEMENT WHERE code = NEW.code AND status = 'ACTIVE') = 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot share a key that has not been purchased.';
+  END IF;
+END$$
+
+DELIMITER ;
+
+-- =============================================================
+-- EXAMPLE QUERIES VIOLATING CONSTRAINTS (TRIGGERS)
+-- (comments – for manual testing; should end with a SIGNAL error)
+-- =============================================================
+
+-- 1) TR_GROUP_MEMBER_ONE_OWNER_INS – attempt to add a second OWNER to the same group
+--    (Group 101 already has OWNER 'jan@test.pl')
+-- INSERT INTO GROUP_MEMBER(group_id, email, role, joined_at)
+-- VALUES (101, 'ola@test.pl', 'OWNER', NOW());
+-- Expected error: 'A group can have only one OWNER.'
+
+-- 2) TR_GROUP_MEMBER_ONE_OWNER_UPD – attempt to change an existing member's role to OWNER
+--    when an OWNER already exists
+-- UPDATE GROUP_MEMBER
+-- SET role = 'OWNER'
+-- WHERE group_id = 101 AND email = 'ala@test.pl';
+-- Expected error: 'A group can have only one OWNER.'
+
+-- 3) TR_GROUP_MEMBER_NO_EMPTY_GROUP_DEL – attempt to delete the last member of a group
+--    (First delete the MEMBER record so only one remains, then try deleting it.)
+-- DELETE FROM GROUP_MEMBER WHERE group_id = 101 AND email = 'ala@test.pl';
+-- DELETE FROM GROUP_MEMBER WHERE group_id = 101 AND email = 'jan@test.pl';
+-- Expected error for second DELETE:
+-- 'Cannot delete the last member of a group (group cannot be empty).'
+
+-- 4) TR_CART_ITEM_CART_ACTIVE – attempt to add an item to an inactive cart
+--    (Cart 8 has status 'CLOSED' in sample data.)
+-- INSERT INTO CART_ITEM(cart_id, sku, quantity, price_gross_pln_snapshot, added_at)
+-- VALUES (8, 'WIN11-PRO-PL', 1, 599.00, NOW());
+-- Expected error: 'Cannot add items to an inactive cart.'
+
+-- 5) TR_ACCESS_REQUIRES_PURCHASE – attempt to share a key that was not purchased
+--    (KEY-0011 exists in LICENSE_KEY but is not in ENTITLEMENT as 'ACTIVE')
+-- INSERT INTO GROUP_KEY_ACCESS(group_id, code, status, granted_at, revoked_at)
+-- VALUES (101, 'KEY-0011-AAAAA-BBBBB-CCCCC', 'ACTIVE', NOW(), NULL);
+-- Expected error: 'Cannot share a key that has not been purchased.'
